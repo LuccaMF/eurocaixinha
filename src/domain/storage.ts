@@ -12,6 +12,7 @@ export function emptyState(): AppState {
     salaries: {},
     expenses: [],
     withdrawals: [],
+    incomes: [],
     rules: {},
   }
 }

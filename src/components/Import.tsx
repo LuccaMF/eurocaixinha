@@ -25,7 +25,10 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
   const [error, setError] = useState('')
   const [choices, setChoices] = useState<Record<string, Choice>>({})
 
-  const imported = useMemo(() => new Set(state.expenses.map(e => e.importKey).filter(Boolean)), [state.expenses])
+  const imported = useMemo(
+    () => new Set([...state.expenses, ...state.incomes].map(e => e.importKey).filter(Boolean)),
+    [state.expenses, state.incomes],
+  )
 
   async function onFile(file: File) {
     setError('')
@@ -34,7 +37,10 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
       const links = linkInstallments(parsed.rows)
       const initial: Record<string, Choice> = {}
       for (const r of parsed.rows) {
-        if (r.kind === 'topup') continue
+        if (r.kind === 'topup') {
+          initial[r.key] = { include: !r.pending && !imported.has(r.key), category: '', subcategory: '' }
+          continue
+        }
         const link = links[r.key]
         const rule = link ? { category: link.category, subcategory: link.subcategory } : suggest(r.description, state.rules)
         initial[r.key] = {
@@ -84,6 +90,8 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
   const topups = result?.rows.filter(r => r.kind === 'topup') ?? []
   const selected = rows.filter(r => choices[r.key]?.include && !imported.has(r.key))
   const missing = selected.filter(r => !choices[r.key].category).length
+  const selectedIncomes = topups.filter(r => choices[r.key]?.include && !imported.has(r.key))
+  const total = selected.length + selectedIncomes.length
 
   function update(key: string, patch: Partial<Choice>) {
     setChoices(c => ({ ...c, [key]: { ...c[key], ...patch } }))
@@ -109,9 +117,10 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
           installment,
         }
       })
-      return { ...s, rules, expenses: [...s.expenses, ...expenses] }
+      const incomes = selectedIncomes.map(r => ({ id: newId(), date: r.date, amount: r.amount, description: r.description, importKey: r.key }))
+      return { ...s, rules, expenses: [...s.expenses, ...expenses], incomes: [...s.incomes, ...incomes] }
     })
-    onDone(selected.length)
+    onDone(total)
     setResult(null)
   }
 
@@ -131,22 +140,42 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
         <>
           <div className="notice">
             <span>
-              {rows.length} movimentos · {selected.length} selecionados
+              {rows.length + topups.length} movimentos · {total} selecionados
               {missing > 0 && <> · <b className="warn">{missing} sem categoria</b></>}
             </span>
-            <button className="btn primary" onClick={confirm} disabled={selected.length === 0 || missing > 0}>
-              Importar {selected.length}
+            <button className="btn primary" onClick={confirm} disabled={total === 0 || missing > 0}>
+              Importar {total}
             </button>
           </div>
           {topups.length > 0 && (
-            <p className="hint">
-              {topups.length} carregamento(s) ({topups.map(t => formatEur(t.amount)).join(', ')}) não são importados:
-              é dinheiro a entrar de outra conta tua, normalmente o salário. O salário introduz-se no início.
-            </p>
+            <div className="import-group">
+              <h3>Entradas</h3>
+              <p className="hint">
+                Carregamentos vindos de outra conta tua, normalmente o salário. Aparecem no Início como entradas,
+                mas não mudam o saldo: esse continua a usar o salário que indicas.
+              </p>
+              <div className="import-list">
+                {topups.map(r => {
+                  const id = `imp-${r.key.replace(/[^a-z0-9]/gi, '')}`
+                  const done = imported.has(r.key)
+                  return (
+                    <div className={`import-row ${done ? 'done' : ''}`} key={r.key}>
+                      <input id={id} type="checkbox" checked={!!choices[r.key]?.include && !done} disabled={done} onChange={e => update(r.key, { include: e.target.checked })} aria-label={`Importar ${r.description}`} />
+                      <label htmlFor={id} className="item-main">
+                        <span className="desc">{r.description}</span>
+                        <span className="meta">{formatDay(r.date)}{r.pending && ' · pendente'}{done && ' · já importado'}</span>
+                      </label>
+                      <Amount cents={r.amount} incoming format={formatEur} />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           )}
           {result.skipped.length > 0 && (
             <p className="hint">Ignorei {result.skipped.length} linha(s): {result.skipped.map(s => s.reason).join(', ')}.</p>
           )}
+          <h3>Gastos e reembolsos</h3>
           <div className="import-list">
             {rows.map(r => (
               <ImportRow key={r.key} row={r} choice={choices[r.key]} done={imported.has(r.key)} onChange={p => update(r.key, p)} />

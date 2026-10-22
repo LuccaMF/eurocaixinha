@@ -73,7 +73,8 @@ function MainApp({ store, state }: { store: AppStore; state: AppState }) {
 
       <div className={tab === 'home' ? 'page' : 'page narrow'}>
         {tab === 'home' && (
-          <Home state={state} month={month} onEditSalary={() => setEditingSalary(true)} onEditExpense={e => setExpenseDialog({ mode: 'edit', expense: e })} />
+          <Home state={state} month={month} onEditSalary={() => setEditingSalary(true)} onEditExpense={e => setExpenseDialog({ mode: 'edit', expense: e })}
+            onDeleteIncome={id => setState(s => ({ ...s, incomes: s.incomes.filter(i => i.id !== id) }))} />
         )}
         {tab === 'savings' && <Savings state={state} setState={setState} onDeposit={() => setExpenseDialog({ mode: 'new', category: 'pou' })} />}
         {tab === 'import' && (

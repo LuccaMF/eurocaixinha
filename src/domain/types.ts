@@ -35,6 +35,18 @@ export interface Installment {
   total: number
 }
 
+/**
+ * Dinheiro que entrou na conta (ex.: carregamento vindo do banco do salário).
+ * É só informativo: o saldo do mês usa o salário que o utilizador indica.
+ */
+export interface Income {
+  id: string
+  date: ISODate
+  amount: Cents
+  description: string
+  importKey?: string
+}
+
 /** Retirada da poupança. Os depósitos são os gastos da categoria 'pou'. */
 export interface Withdrawal {
   id: string
@@ -57,6 +69,7 @@ export interface AppState {
   salaries: Record<MonthKey, Cents>
   expenses: Expense[]
   withdrawals: Withdrawal[]
+  incomes: Income[]
   /** Regras aprendidas: descrição normalizada -> categoria escolhida. */
   rules: Record<string, Rule>
 }

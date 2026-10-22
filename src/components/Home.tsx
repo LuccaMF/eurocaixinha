@@ -3,7 +3,7 @@ import { CATEGORIES, CATEGORY_BY_ID, type CategoryDef } from '../domain/categori
 import { installmentPlans, type InstallmentPlan } from '../domain/installments'
 import { formatDay, formatEur, formatMonth, monthOf } from '../domain/money'
 import { summarizeMonth, type CategorySummary } from '../domain/summary'
-import type { AppState, Expense, MonthKey } from '../domain/types'
+import type { AppState, Expense, Income, MonthKey } from '../domain/types'
 import { Amount } from './FlowIcon'
 
 interface Props {
@@ -11,15 +11,18 @@ interface Props {
   month: MonthKey
   onEditSalary: () => void
   onEditExpense: (e: Expense) => void
+  onDeleteIncome: (id: string) => void
 }
 
-export function Home({ state, month, onEditSalary, onEditExpense }: Props) {
+export function Home({ state, month, onEditSalary, onEditExpense, onDeleteIncome }: Props) {
   const s = summarizeMonth(state, month)
   const monthExpenses = state.expenses
     .filter(e => monthOf(e.date) === month)
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
   const barBase = Math.max(s.salary + s.fromSavings, s.spent) || 1
   const activePlans = installmentPlans(state.expenses).filter(p => !p.done)
+  const monthIncomes = state.incomes.filter(i => monthOf(i.date) === month).sort((a, b) => b.date.localeCompare(a.date))
+  const hasSide = activePlans.length > 0 || monthIncomes.length > 0
 
   return (
     <>
@@ -57,7 +60,7 @@ export function Home({ state, month, onEditSalary, onEditExpense }: Props) {
         </section>
       </div>
 
-      <div className={`board ${activePlans.length ? 'with-side' : ''}`}>
+      <div className={`board ${hasSide ? 'with-side' : ''}`}>
         <div className="columns">
           {CATEGORIES.map(def => (
             <CategoryColumn
@@ -70,7 +73,12 @@ export function Home({ state, month, onEditSalary, onEditExpense }: Props) {
             />
           ))}
         </div>
-        {activePlans.length > 0 && <PlansPanel plans={activePlans} />}
+        {hasSide && (
+          <div className="side-col">
+            {monthIncomes.length > 0 && <IncomePanel incomes={monthIncomes} onDelete={onDeleteIncome} />}
+            {activePlans.length > 0 && <PlansPanel plans={activePlans} />}
+          </div>
+        )}
       </div>
     </>
   )
@@ -145,6 +153,28 @@ function CategoryColumn({ def, summary, percent, expenses, onEdit }: {
         )}
       </div>
     </section>
+  )
+}
+
+function IncomePanel({ incomes, onDelete }: { incomes: Income[]; onDelete: (id: string) => void }) {
+  const total = incomes.reduce((sum, i) => sum + i.amount, 0)
+  return (
+    <aside className="side" aria-label="Entradas do mês">
+      <h3>Entradas do mês</h3>
+      <p className="hint">Entraram <b className="num">{formatEur(total)}</b> na conta</p>
+      <div className="list">
+        {incomes.map(i => (
+          <div className="item static income" key={i.id}>
+            <span className="item-main">
+              <span className="desc">{i.description}</span>
+              <span className="meta">{formatDay(i.date)}</span>
+            </span>
+            <Amount cents={i.amount} incoming format={formatEur} />
+            <button className="del" onClick={() => onDelete(i.id)} aria-label={`Apagar entrada ${i.description}`}>×</button>
+          </div>
+        ))}
+      </div>
+    </aside>
   )
 }
 
