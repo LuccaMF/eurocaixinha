@@ -1,6 +1,9 @@
+import { isVault, type Vault } from './crypto'
 import type { AppState } from './types'
 
-const KEY = 'eurocaixinha'
+const VAULT_KEY = 'eurocaixinha-vault'
+/** Versões antigas guardavam os dados sem encriptação nesta chave. */
+const LEGACY_KEY = 'eurocaixinha'
 
 export function emptyState(): AppState {
   return {
@@ -22,21 +25,50 @@ export function parseState(json: string): AppState {
   return { ...emptyState(), ...data }
 }
 
-export function loadState(): AppState {
+export function loadVault(): Vault | null {
   try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? parseState(raw) : emptyState()
+    const raw = localStorage.getItem(VAULT_KEY)
+    const parsed = raw ? JSON.parse(raw) : null
+    return isVault(parsed) ? parsed : null
   } catch {
-    return emptyState()
+    return null
   }
 }
 
-export function saveState(state: AppState): boolean {
+export function saveVault(vault: Vault): boolean {
   try {
-    localStorage.setItem(KEY, JSON.stringify(state))
+    localStorage.setItem(VAULT_KEY, JSON.stringify(vault))
     return true
   } catch {
     return false
+  }
+}
+
+/** Apaga tudo o que a app guardou neste navegador. */
+export function deleteAllData() {
+  try {
+    localStorage.removeItem(VAULT_KEY)
+    localStorage.removeItem(LEGACY_KEY)
+  } catch {
+    // sem acesso ao armazenamento: não há nada para apagar
+  }
+}
+
+/** Dados de uma versão antiga, sem encriptação. São migrados quando se cria a palavra-passe. */
+export function loadLegacyState(): AppState | null {
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY)
+    return raw ? parseState(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export function removeLegacyState() {
+  try {
+    localStorage.removeItem(LEGACY_KEY)
+  } catch {
+    // ignorar
   }
 }
 

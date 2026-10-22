@@ -34,7 +34,8 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .brand span { color: var(--brand-ink); }
 .month { display: flex; align-items: center; gap: 4px; }
 .month button { background: none; border: 1px solid var(--line); border-radius: 8px; width: 34px; height: 34px; }
-.month strong { min-width: 9.5em; text-align: center; text-transform: capitalize; font-weight: 500; }
+.month strong { min-width: 9.5em; text-align: center; font-weight: 500; }
+.month strong::first-letter { text-transform: uppercase; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; margin-top: -10px; }
 .tabs button { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 12px; color: var(--muted); white-space: nowrap; }
@@ -115,3 +116,16 @@ button.item:hover { background: var(--surface); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: no-preference) { .bar i { transition: width .3s ease; } }
 .more { margin-top: 12px; }
+
+/* Bloqueio e palavra-passe */
+.lock { max-width: 440px; padding-block: 48px 48px; }
+.lock-card { background: var(--surface); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.lock-card h2 { margin: 0; }
+.lock-reset { display: flex; flex-direction: column; gap: 12px; }
+.check { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 0.88rem; color: var(--muted); cursor: pointer; }
+.check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--brand); }
+.top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn.small { padding: 6px 12px; font-size: 0.85rem; }
+.btn.danger { background: none; border-color: var(--danger); color: var(--danger); }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.stack h2 { margin-bottom: 0; }

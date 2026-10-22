@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { ExpenseModal } from './components/ExpenseModal'
 import { Home } from './components/Home'
 import { Import } from './components/Import'
+import { LockScreen } from './components/LockScreen'
 import { SalaryModal } from './components/SalaryModal'
 import { Savings } from './components/Savings'
 import { Settings } from './components/Settings'
 import { formatMonth, monthKey, monthOf, shiftMonth, todayISO } from './domain/money'
-import type { Expense } from './domain/types'
-import { useAppState } from './useAppState'
+import type { AppState, Expense } from './domain/types'
+import { useAppState, type AppStore } from './useAppState'
 
 type Tab = 'home' | 'savings' | 'import' | 'settings'
 const TABS: [Tab, string][] = [['home', 'Início'], ['savings', 'Poupança'], ['import', 'Importar'], ['settings', 'Definições']]
@@ -15,7 +16,15 @@ const TABS: [Tab, string][] = [['home', 'Início'], ['savings', 'Poupança'], ['
 type ExpenseDialog = { mode: 'new'; category?: 'pou' } | { mode: 'edit'; expense: Expense } | null
 
 export default function App() {
-  const { state, setState, saveFailed } = useAppState()
+  const store = useAppState()
+  if (store.status !== 'unlocked' || !store.state) {
+    return <LockScreen key={store.status} mode={store.status === 'setup' ? 'setup' : 'locked'} onCreate={store.create} onUnlock={store.unlock} />
+  }
+  return <MainApp store={store} state={store.state} />
+}
+
+function MainApp({ store, state }: { store: AppStore; state: AppState }) {
+  const { setState, saveFailed } = store
   const [tab, setTab] = useState<Tab>('home')
   const [month, setMonth] = useState(monthKey(new Date()))
   const [expenseDialog, setExpenseDialog] = useState<ExpenseDialog>(null)
@@ -25,7 +34,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(''), 4000)
+    const t = setTimeout(() => setToast(''), 8000)
     return () => clearTimeout(t)
   }, [toast])
 
@@ -38,13 +47,16 @@ export default function App() {
     <div className="wrap">
       <header className="top">
         <h1 className="brand">Euro<span>Caixinha</span></h1>
-        {tab === 'home' && (
-          <div className="month">
-            <button onClick={() => setMonth(m => shiftMonth(m, -1))} aria-label="Mês anterior">‹</button>
-            <strong>{formatMonth(month)}</strong>
-            <button onClick={() => setMonth(m => shiftMonth(m, 1))} aria-label="Mês seguinte">›</button>
-          </div>
-        )}
+        <div className="top-actions">
+          {tab === 'home' && (
+            <div className="month">
+              <button onClick={() => setMonth(m => shiftMonth(m, -1))} aria-label="Mês anterior">‹</button>
+              <strong>{formatMonth(month)}</strong>
+              <button onClick={() => setMonth(m => shiftMonth(m, 1))} aria-label="Mês seguinte">›</button>
+            </div>
+          )}
+          <button className="btn small" onClick={store.lock}>Bloquear</button>
+        </div>
       </header>
 
       <nav className="tabs" aria-label="Secções">
@@ -63,9 +75,9 @@ export default function App() {
       )}
       {tab === 'savings' && <Savings state={state} setState={setState} onDeposit={() => setExpenseDialog({ mode: 'new', category: 'pou' })} />}
       {tab === 'import' && (
-        <Import state={state} setState={setState} onDone={n => { setToast(`${n} movimentos importados.`); setTab('home') }} />
+        <Import state={state} setState={setState} onDone={n => { setToast(`${n} movimentos importados. Já podes apagar o ficheiro CSV da tua pasta de Transferências.`); setTab('home') }} />
       )}
-      {tab === 'settings' && <Settings state={state} setState={setState} />}
+      {tab === 'settings' && <Settings state={state} store={store} />}
 
       <button className="fab" onClick={() => setExpenseDialog({ mode: 'new' })} aria-label="Adicionar gasto">+</button>
 
