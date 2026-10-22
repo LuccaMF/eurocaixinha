@@ -14,6 +14,8 @@
   --c-nao: #9b8cf0; /* violeta: distingue-se do laranja de Essenciais, também com daltonismo */
   --c-pou: #8fb39f;
   --danger: #e8806b;
+  --in: #5fd08a;  /* dinheiro a entrar */
+  --out: #f07a6a; /* dinheiro a sair */
   --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -67,8 +69,6 @@ button.item:hover { background: var(--surface); }
 .item-main { display: flex; flex-direction: column; min-width: 0; }
 .desc { font-weight: 500; overflow-wrap: anywhere; }
 .meta { color: var(--muted); font-size: 0.82rem; }
-.pos { color: var(--c-pou); }
-.neg-text { color: var(--danger); }
 .empty, .hint { color: var(--muted); margin: 0; font-size: 0.88rem; }
 .notice { background: var(--surface); border-radius: 10px; padding: 12px 14px; font-size: 0.9rem; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; align-items: center; margin: 0; }
 .warn { color: var(--danger); }
@@ -158,3 +158,9 @@ button.item:hover { background: var(--surface); }
 .ring text { font-family: var(--f-mono); }
 .inst-link { color: var(--c-pou); }
 .installment { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+
+/* Sentido do dinheiro: + verde entra, − vermelho sai */
+.amount { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.flow { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-family: var(--f-body); font-size: 0.85rem; font-weight: 700; line-height: 1; flex: none; }
+.flow.in { color: var(--in); background: color-mix(in srgb, var(--in) 16%, transparent); }
+.flow.out { color: var(--out); background: color-mix(in srgb, var(--out) 16%, transparent); }

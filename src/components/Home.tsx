@@ -4,6 +4,7 @@ import { installmentPlans, type InstallmentPlan } from '../domain/installments'
 import { formatDay, formatEur, formatMonth, monthOf } from '../domain/money'
 import { summarizeMonth, type CategorySummary } from '../domain/summary'
 import type { AppState, Expense, MonthKey } from '../domain/types'
+import { Amount } from './FlowIcon'
 
 interface Props {
   state: AppState
@@ -133,7 +134,8 @@ function CategoryColumn({ def, summary, percent, expenses, onEdit }: {
                 {e.installment && <> · {e.installment.number}/{e.installment.total}</>}
               </span>
             </span>
-            <b className={`num ${e.amount < 0 ? 'pos' : ''}`}>{e.amount < 0 ? '+' + formatEur(-e.amount) : formatEur(e.amount)}</b>
+            {/* Um valor negativo é um reembolso: dinheiro que voltou a entrar. */}
+            <Amount cents={e.amount} incoming={e.amount < 0} format={formatEur} />
           </button>
         ))}
         {shown.length > VISIBLE && (

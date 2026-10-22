@@ -5,6 +5,7 @@ import { newId } from '../domain/storage'
 import { savingsHistory } from '../domain/summary'
 import type { AppState } from '../domain/types'
 import type { SetState } from '../useAppState'
+import { Amount } from './FlowIcon'
 import { Modal } from './Modal'
 
 const SUBS = CATEGORY_BY_ID.pou.subcategories
@@ -44,7 +45,8 @@ export function Savings({ state, setState, onDeposit }: { state: AppState; setSt
                 <span className="desc">{m.description}</span>
                 <span className="meta">{formatDay(m.date)} · {m.subcategory} · saldo {formatEur(m.balance)}</span>
               </span>
-              <b className={`num ${m.amount < 0 ? 'neg-text' : 'pos'}`}>{m.amount < 0 ? '−' : '+'}{formatEur(Math.abs(m.amount))}</b>
+              {/* Aqui o sentido é o da poupança: depósito entra, retirada sai. */}
+              <Amount cents={m.amount} incoming={m.amount > 0} format={formatEur} />
             </div>
           ))}
         </div>

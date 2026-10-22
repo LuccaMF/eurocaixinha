@@ -7,6 +7,7 @@ import { newId } from '../domain/storage'
 import type { AppState, CategoryId, Installment, Rule } from '../domain/types'
 import type { SetState } from '../useAppState'
 import { CategoryPicker } from './CategoryPicker'
+import { Amount } from './FlowIcon'
 
 // Descrições que não dizem nada sobre o gasto: não vale a pena aprender uma regra para elas.
 const VAGUE = ['payment', 'sepa+ credit transfer', 'transferencia']
@@ -178,7 +179,7 @@ function ImportRow({ row, choice, done, onChange }: { row: StatementRow; choice:
           </span>
         )}
       </label>
-      <b className={`num ${row.kind === 'credit' ? 'pos' : ''}`}>{row.kind === 'credit' ? '+' : ''}{formatEur(row.amount)}</b>
+      <Amount cents={row.amount} incoming={row.kind !== 'debit'} format={formatEur} />
       {!done && choice.include && (
         <CategoryPicker compact idPrefix={id} category={choice.category} subcategory={choice.subcategory} onChange={(category, subcategory) => onChange({ category, subcategory })} />
       )}
