@@ -81,7 +81,9 @@ describe('suggest', () => {
   it('reconhece supermercados e serviços conhecidos', () => {
     expect(suggest('Pingo Doce', {})).toEqual({ category: 'ess', subcategory: 'Alimentação' })
     expect(suggest('NOS COMUNICACOES SA', {})?.subcategory).toBe('Contas da casa')
-    expect(suggest('Amazon Prime', {})?.subcategory).toBe('Lazer e entretenimento')
+    expect(suggest('Amazon Prime', {})?.subcategory).toBe('Assinaturas')
+    expect(suggest('Spotify', {})?.subcategory).toBe('Assinaturas')
+    expect(suggest('NOS Cinemas', {})?.subcategory).toBe('Lazer e entretenimento')
     expect(suggest('Amazon', {})?.subcategory).toBe('Compras supérfluas')
   })
   it('dá prioridade ao que o utilizador escolheu antes', () => {

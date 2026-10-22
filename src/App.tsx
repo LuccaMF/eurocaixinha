@@ -6,6 +6,7 @@ import { LockScreen } from './components/LockScreen'
 import { SalaryModal } from './components/SalaryModal'
 import { Savings } from './components/Savings'
 import { Settings } from './components/Settings'
+import { installmentPlans } from './domain/installments'
 import { formatMonth, monthKey, monthOf, shiftMonth, todayISO } from './domain/money'
 import type { AppState, Expense } from './domain/types'
 import { useAppState, type AppStore } from './useAppState'
@@ -86,6 +87,7 @@ function MainApp({ store, state }: { store: AppStore; state: AppState }) {
           expense={expenseDialog.mode === 'edit' ? expenseDialog.expense : undefined}
           initialCategory={expenseDialog.mode === 'new' ? expenseDialog.category : undefined}
           defaultDate={defaultDate}
+          plans={installmentPlans(state.expenses)}
           setState={setState}
           onClose={() => setExpenseDialog(null)}
           onSaved={date => {

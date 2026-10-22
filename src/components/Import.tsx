@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { formatDay, formatEur } from '../domain/money'
+import { installmentPlans, matchPlan } from '../domain/installments'
+import { formatDay, formatEur, monthOf } from '../domain/money'
 import { parseRevolutCsv, type ParseResult, type StatementRow } from '../domain/revolut'
 import { normalize, suggest } from '../domain/rules'
 import { newId } from '../domain/storage'
-import type { AppState, CategoryId, Rule } from '../domain/types'
+import type { AppState, CategoryId, Installment, Rule } from '../domain/types'
 import type { SetState } from '../useAppState'
 import { CategoryPicker } from './CategoryPicker'
 
@@ -14,6 +15,8 @@ interface Choice {
   include: boolean
   category: CategoryId | ''
   subcategory: string
+  /** Prestação seguinte de um plano já conhecido, reconhecida automaticamente. */
+  installment?: Installment
 }
 
 export function Import({ state, setState, onDone }: { state: AppState; setState: SetState; onDone: (count: number) => void }) {
@@ -27,15 +30,18 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
     setError('')
     try {
       const parsed = parseRevolutCsv(await file.text())
+      const links = linkInstallments(parsed.rows)
       const initial: Record<string, Choice> = {}
       for (const r of parsed.rows) {
         if (r.kind === 'topup') continue
-        const rule = suggest(r.description, state.rules)
+        const link = links[r.key]
+        const rule = link ? { category: link.category, subcategory: link.subcategory } : suggest(r.description, state.rules)
         initial[r.key] = {
           // Por defeito: importar gastos concluídos; entradas e pendentes ficam para decidir.
           include: r.kind === 'debit' && !r.pending && !imported.has(r.key),
           category: rule?.category ?? '',
           subcategory: rule?.subcategory ?? '',
+          installment: link?.installment,
         }
       }
       setChoices(initial)
@@ -44,6 +50,30 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
       setResult(null)
       setError(e instanceof Error ? e.message : 'Não consegui ler o ficheiro.')
     }
+  }
+
+  /**
+   * Liga movimentos do extrato à prestação seguinte de planos já registados (mesma descrição e valor).
+   * Percorre por ordem de data, para que dois meses do mesmo plano no mesmo extrato fiquem 4 e 5, e não 4 e 4.
+   */
+  function linkInstallments(rows: StatementRow[]) {
+    const plans = installmentPlans(state.expenses).map(p => ({ ...p }))
+    const links: Record<string, { installment: Installment; category: CategoryId; subcategory: string }> = {}
+    for (const r of [...rows].sort((a, b) => a.date.localeCompare(b.date))) {
+      if (r.kind !== 'debit' || imported.has(r.key)) continue
+      const plan = matchPlan(plans, r.description, r.amount, r.date)
+      if (!plan) continue
+      plan.paid += 1
+      plan.remaining -= 1
+      plan.done = plan.remaining <= 0
+      plan.lastMonth = monthOf(r.date)
+      links[r.key] = {
+        installment: { planId: plan.planId, name: plan.name, number: plan.paid, total: plan.total },
+        category: plan.category,
+        subcategory: plan.subcategory,
+      }
+    }
+    return links
   }
 
   // Os que ainda não têm categoria aparecem primeiro, para não ter de os procurar.
@@ -63,7 +93,7 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
     setState(s => {
       const rules: Record<string, Rule> = { ...s.rules }
       const expenses = selected.map(r => {
-        const { category, subcategory } = choices[r.key] as { category: CategoryId; subcategory: string }
+        const { category, subcategory, installment } = choices[r.key] as Choice & { category: CategoryId }
         const key = normalize(r.description)
         if (!VAGUE.some(v => key.startsWith(v))) rules[key] = { category, subcategory }
         return {
@@ -75,6 +105,7 @@ export function Import({ state, setState, onDone }: { state: AppState; setState:
           category,
           subcategory,
           importKey: r.key,
+          installment,
         }
       })
       return { ...s, rules, expenses: [...s.expenses, ...expenses] }
@@ -140,6 +171,12 @@ function ImportRow({ row, choice, done, onChange }: { row: StatementRow; choice:
           {row.kind === 'credit' && ' · entrada (conta como reembolso)'}
           {done && ' · já importado'}
         </span>
+        {!done && choice.include && choice.installment && (
+          <span className="meta inst-link">
+            Prestação {choice.installment.number} de {choice.installment.total} · {choice.installment.name}{' '}
+            <button type="button" className="link" onClick={() => onChange({ installment: undefined })}>não é</button>
+          </span>
+        )}
       </label>
       <b className={`num ${row.kind === 'credit' ? 'pos' : ''}`}>{row.kind === 'credit' ? '+' : ''}{formatEur(row.amount)}</b>
       {!done && choice.include && (

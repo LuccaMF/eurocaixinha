@@ -129,3 +129,11 @@ button.item:hover { background: var(--surface); }
 .btn.danger { background: none; border-color: var(--danger); color: var(--danger); }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .stack h2 { margin-bottom: 0; }
+
+/* Prestações */
+.installment { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.plans { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+.plan { display: flex; flex-direction: column; gap: 6px; }
+.plan-head { display: flex; justify-content: space-between; gap: 12px; }
+.plan-head .num { color: var(--muted); }
+.inst-link { color: var(--c-pou); }

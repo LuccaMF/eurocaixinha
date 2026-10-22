@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CATEGORY_BY_ID } from '../domain/categories'
-import { formatDay, formatEur, monthOf } from '../domain/money'
+import { installmentPlans } from '../domain/installments'
+import { formatDay, formatEur, formatMonth, monthOf } from '../domain/money'
 import { summarizeMonth } from '../domain/summary'
 import type { AppState, Expense, MonthKey } from '../domain/types'
 
@@ -18,6 +19,8 @@ export function Home({ state, month, onEditSalary, onEditExpense }: Props) {
     .filter(e => monthOf(e.date) === month)
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
   const barBase = Math.max(s.salary + s.fromSavings, s.spent) || 1
+  const activePlans = installmentPlans(state.expenses).filter(p => !p.done)
+  const owed = activePlans.reduce((sum, p) => sum + p.remainingAmount, 0)
 
   return (
     <>
@@ -58,6 +61,31 @@ export function Home({ state, month, onEditSalary, onEditExpense }: Props) {
         })}
       </section>
 
+      {activePlans.length > 0 && (
+        <section aria-label="Prestações">
+          <h2>Prestações</h2>
+          <p className="hint">
+            Ainda tens cerca de <b className="num">{formatEur(owed)}</b> por pagar em {activePlans.length}{' '}
+            {activePlans.length === 1 ? 'compra' : 'compras'} a prestações.
+          </p>
+          <div className="plans">
+            {activePlans.map(p => (
+              <div className="plan" key={p.planId}>
+                <div className="plan-head">
+                  <span className="desc">{p.name}</span>
+                  <span className="num">{p.paid} de {p.total}</span>
+                </div>
+                <div className="bar"><i style={{ width: `${(p.paid / p.total) * 100}%`, background: CATEGORY_BY_ID[p.category].color }} /></div>
+                <span className="meta">
+                  Faltam {p.remaining} × {formatEur(p.amount)} = <span className="num">{formatEur(p.remainingAmount)}</span>
+                  {' '}· última em {formatMonth(p.endMonth)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section aria-label="Gráfico de gastos">
         <h2>Para onde foi o dinheiro</h2>
         <div className="chartbox">
@@ -84,7 +112,10 @@ export function Home({ state, month, onEditSalary, onEditExpense }: Props) {
               <span className="stripe" style={{ background: CATEGORY_BY_ID[e.category].color }} />
               <span className="item-main">
                 <span className="desc">{e.description}</span>
-                <span className="meta">{formatDay(e.date)} · {CATEGORY_BY_ID[e.category].name} › {e.subcategory}</span>
+                <span className="meta">
+                  {formatDay(e.date)} · {CATEGORY_BY_ID[e.category].name} › {e.subcategory}
+                  {e.installment && <> · prestação {e.installment.number}/{e.installment.total}</>}
+                </span>
               </span>
               <b className={`num ${e.amount < 0 ? 'pos' : ''}`}>{e.amount < 0 ? '+' + formatEur(-e.amount) : formatEur(e.amount)}</b>
             </button>

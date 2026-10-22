@@ -18,6 +18,21 @@ export interface Expense {
   subcategory: string
   /** Presente quando o gasto veio de um extrato; serve para não importar duas vezes. */
   importKey?: string
+  /** Presente quando o gasto é uma prestação de uma compra a prestações. */
+  installment?: Installment
+}
+
+/**
+ * Uma prestação de um plano (ex.: portátil em 6x pela Klarna).
+ * Não há uma lista de planos à parte: um plano é o conjunto de gastos com o mesmo planId.
+ */
+export interface Installment {
+  planId: string
+  /** Nome da compra, ex.: "Portátil PCDIGA". */
+  name: string
+  /** Número desta prestação, a contar de 1. */
+  number: number
+  total: number
 }
 
 /** Retirada da poupança. Os depósitos são os gastos da categoria 'pou'. */

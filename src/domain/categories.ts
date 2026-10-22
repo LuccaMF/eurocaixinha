@@ -18,7 +18,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: 'nao',
     name: 'Não essenciais',
     color: 'var(--c-nao)',
-    subcategories: ['Alimentação fora de casa', 'Lazer e entretenimento', 'Cuidados pessoais e estética', 'Compras supérfluas', 'Outros'],
+    subcategories: ['Alimentação fora de casa', 'Assinaturas', 'Lazer e entretenimento', 'Cuidados pessoais e estética', 'Compras supérfluas', 'Outros'],
   },
   {
     id: 'pou',
