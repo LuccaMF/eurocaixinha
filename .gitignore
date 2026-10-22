@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dados pessoais: nunca enviar extratos nem backups para o repositório
+*.csv
+eurocaixinha-*.json
