@@ -71,14 +71,16 @@ function MainApp({ store, state }: { store: AppStore; state: AppState }) {
       {saveFailed && <p className="notice err">Não foi possível guardar no navegador. As alterações perdem-se ao fechar a página.</p>}
       {toast && <p className="notice" role="status">{toast}</p>}
 
-      {tab === 'home' && (
-        <Home state={state} month={month} onEditSalary={() => setEditingSalary(true)} onEditExpense={e => setExpenseDialog({ mode: 'edit', expense: e })} />
-      )}
-      {tab === 'savings' && <Savings state={state} setState={setState} onDeposit={() => setExpenseDialog({ mode: 'new', category: 'pou' })} />}
-      {tab === 'import' && (
-        <Import state={state} setState={setState} onDone={n => { setToast(`${n} movimentos importados. Já podes apagar o ficheiro CSV da tua pasta de Transferências.`); setTab('home') }} />
-      )}
-      {tab === 'settings' && <Settings state={state} store={store} />}
+      <div className={tab === 'home' ? 'page' : 'page narrow'}>
+        {tab === 'home' && (
+          <Home state={state} month={month} onEditSalary={() => setEditingSalary(true)} onEditExpense={e => setExpenseDialog({ mode: 'edit', expense: e })} />
+        )}
+        {tab === 'savings' && <Savings state={state} setState={setState} onDeposit={() => setExpenseDialog({ mode: 'new', category: 'pou' })} />}
+        {tab === 'import' && (
+          <Import state={state} setState={setState} onDone={n => { setToast(`${n} movimentos importados. Já podes apagar o ficheiro CSV da tua pasta de Transferências.`); setTab('home') }} />
+        )}
+        {tab === 'settings' && <Settings state={state} store={store} />}
+      </div>
 
       <button className="fab" onClick={() => setExpenseDialog({ mode: 'new' })} aria-label="Adicionar gasto">+</button>
 
